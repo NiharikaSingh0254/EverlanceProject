@@ -1,0 +1,110 @@
+{% extends 'base.html'%} {% block content %}
+
+<div class="container mt-4">
+  <h2>Account Settings</h2>
+  {% include 'partials/_messages.html' %}
+  <hr />
+
+  <div class="container">
+    <div class="col-md-12">
+      <h4>Change Password</h4><br>
+      <form action="{% url 'reset-password' %}" method="post">
+        {% csrf_token %}
+        <div class="form-group">
+          <div class="container">
+            <div class="row">
+              <div class="col-md-4">
+                <h5>Current Password</h5>
+              </div>
+              <div class="col-md-4">
+                <input
+                type="password"
+                class="form-control form-control-sm"
+                name="currentpassword"
+                value="{{values.currentpassword}}"
+              />
+              </div>
+              <div class="col-md-4"></div>
+            </div>
+          </div>  
+        </div>
+        <div class="form-group">
+          <div class="container">
+            <div class="row">
+              <div class="col-md-4">
+                <h5>New Password</h5>
+              </div>
+              <div class="col-md-4">
+                <input
+                type="password"
+                class="form-control form-control-sm"
+                name="newpassword1"
+                value="{{values.newpassword1}}"
+              />
+              </div>
+              <div class="col-md-4"></div>
+            </div>
+          </div>  
+        </div>
+        <div class="form-group">
+          <div class="container">
+            <div class="row">
+              <div class="col-md-4">
+                <h5>Confirm Password</h5>
+              </div>
+              <div class="col-md-4">
+                <input
+                type="password"
+                class="form-control form-control-sm"
+                name="newpassword2"
+                value="{{values.newpassword2}}"
+              />
+              </div>
+              <div class="col-md-4"></div>
+            </div>
+          </div>  
+        </div>
+        <div class="form-group">
+          <div class="container">
+            <div class="row">
+              <div class="col-md-4">
+              </div>
+              <div class="col-md-4">
+                <input
+                  type="submit"
+                  value="Change Password"
+                  class="btn btn-primary btn-primary-sm"
+                />
+              </div>
+              <div class="col-md-4"></div>
+            </div>
+          </div>  
+        </div>
+      </form>
+      <div class="container">
+        <div class="row">
+          <div class="col-md-4"></div>
+          <div class="col-md-4">
+            <form action="{% url 'delete-account' %}" method="post">
+              {% csrf_token %}
+              <input class="btn btn-secondary" id="delete-account-btn" type="submit" value="Delete Account" />
+            </form>
+          </div>
+          <div class="col-md-4"></div>
+        </div>
+      </div>
+    </div>
+  </div> 
+</div>
+
+<script>
+  document.getElementById('delete-account-btn').addEventListener('click', function(event) {
+    if (!confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
+      event.preventDefault();  // Prevents the default action if the user cancels
+    }
+  });
+</script>
+
+
+
+{% endblock %}

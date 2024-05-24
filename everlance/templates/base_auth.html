@@ -1,0 +1,57 @@
+{% load static %}
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
+    <title>Everlance {% block title %} {% endblock %}</title>
+    <!-- Bootstrap core CSS -->
+    <link href="{% static 'css/bootstrap.min.css'%}" rel="stylesheet" />
+    <link href="{% static 'css/main.css'%}" rel="stylesheet" />
+    <link href="{% static 'css/carousel.css'%}" rel="stylesheet" />
+    <link rel="icon" type="image/x-icon" href="{% static 'css/logo.jpg'%}" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+    <!-- Custom styles for this template -->
+    <link href="{% static 'css/dashboard.css' %}" rel="stylesheet" />
+  </head>
+  <body class="no-padding">
+    <!-- <div class="container-fluid">
+      <div class="row"> -->
+        <!-- <main role="main"> -->
+          
+          <!-- <div class="col-md-3">
+
+          </div>
+          <div class="col-md-6"> -->
+            {% block content %} 
+
+
+            {% endblock %}
+          <!-- </div>
+          <div class="col-md-3">
+            
+          </div> -->
+<!--           
+        </main> -->
+      <!-- </div>
+    </div> -->
+    <script
+      src="https://code.jquery.com/jquery-3.4.1.slim.min.js"
+      integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n"
+      crossorigin="anonymous"
+    ></script>
+    <script>
+      window.jQuery ||
+        document.write(
+          '<script src="/docs/4.4/static/js/vendor/jquery.slim.min.js"><\/script>'
+        );
+    </script>
+    <script src="{% static 'js/bootstrap.bundle.min.js'%}"></script> 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/feather-icons/4.9.0/feather.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.min.js"></script>
+    <script src="{% static 'js/main.js' %}"></script>
+  </body>
+</html>

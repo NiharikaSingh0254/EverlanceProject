@@ -1,0 +1,87 @@
+{% extends 'base_auth.html' %}
+{% load static %}
+{% block content %}
+</script>
+<body class="nopadding">
+  <div class="container-fluid">
+    <div class="col-ms-3 padding-left">
+      {% include 'partials/_carousel.html' %}
+    </div>
+    <div class="col-ms-3 mt-4">
+      {% include 'partials/_info.html' %}
+    </div>
+    <div class="col-ms-3">
+      <div class="container-fluid">
+      <div class="row">
+       <div class="col-md-5">
+        <img class="bd-placeholder-img rounded-circle" width="560" height="540" src="{% static 'img/phto6.jpeg'%}" preserveAspectRatio="xMidYMid slice" focusable="false" role="img" aria-label="Placeholder: 140x140"></img>
+       </div>
+        <div class="col-md-7 p-5 mt-5">
+            <div class="card" id="registerform">
+              <div class="card-body" align="center">
+                <div class="card-title py-3">
+                  <h3 align="center" class="h3-new">Register for a Free Account</h3>
+                </div>
+                <form action="{% url 'register' %}" method="post">
+                  {% csrf_token %}
+
+                  {% include 'partials/_messages.html' %}
+                  <div class="form-group">
+                    <input
+                      type="text"
+                      name="username"
+                      placeholder="username"
+                      id="usernameField"
+                      value="{{fieldValues.username}}"
+                      class="form-control form-control-sm"
+                    />
+                    <div class="invalid_feedback invalid-feedback"></div>
+                    <p class="text-sm text-success usernameSuccessOutput"></p>
+                  </div>
+                  <div class="form-group">
+                    <input
+                      type="email"
+                      name="email"
+                      placeholder="Email"
+                      class="form-control form-control-sm"
+                      id="emailField"
+                      value="{{fieldValues.email}}"
+                    />
+                    <div class="emailFeedBackArea invalid-feedback"></div>
+                  </div>
+                  <div class="form-group">
+                    <input
+                      type="password"
+                      name="password"
+                      placeholder="Password"
+                      class="form-control form-control-sm"
+                      id="passwordField"
+                    />
+                    <span class="float-right py-3 showPasswordToggle">SHOW</span>
+                  </div>
+                  <input type="submit" value="Register" class="btn btn-block btn-primary submit-btn" />
+                  
+                </form>
+                <span>Already have an Account?<a href="{% url 'login' %}"> Login</a></span>
+              </div>
+            </div>
+          </div>
+        </div>
+  </div>
+</div>
+    <div class="col-ms-3 width-new p-0">
+      {% include 'partials/_footer.html' %}
+    </div>
+  </div>
+</body>
+<script src="{% static 'js/register.js' %}"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+      // Automatically scroll to the form element with id 'loginform'
+      const formElement = document.getElementById('registerform');
+      if (formElement) {
+          formElement.scrollIntoView();
+      }
+  });
+</script>
+{% endblock content %}

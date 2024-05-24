@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+  <div class="container mt-4">
+    <div class="row">
+      <div class="col-md-12">
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+              <a href="">Expenses Summary</a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+            Summary
+            </li>
+          </ol>
+        </nav>
+      </div>
+    </div>
+  </div>
+  <div class="container mt-3">
+    <div class="row">
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="card">
+                <div class="card-body color1">
+                    <div class="small-card" id="daily"></div>
+                    <h5 class="metric-card-title">Today</h5>
+                    <div class="fa fa-money-bill icon-style"></div>
+                    <div class="metric-card-totals" id="totaldaily"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="card">
+                <div class="card-body color2">
+                    <div class="small-card" id="weekly"></div>
+                    <h5 class="metric-card-title">This Week</h5>
+                    <div class="fa fa-money-bill icon-style"></div>
+                    <div class="metric-card-totals" id="totalweekly"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="card">
+                <div class="card-body color3">
+                    <div class="small-card" id="monthly"></div>
+                    <h5 class="metric-card-title">This Month</h5>
+                    <div class="fa fa-money-bill icon-style"></div>
+                    <div class="metric-card-totals" id="totalmonthly"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="card">
+                <div class="card-body color4">
+                    <div class="small-card" id="yearly"></div>
+                    <h5 class="metric-card-title">This Year</h5>
+                    <div class="fa fa-money-bill icon-style"></div>
+                    <div class="metric-card-totals" id="totalyearly"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+  </div>
+  <div class="container-fluid mt-3">
+    <div class="row">
+      <div class="col-md-6">
+        <canvas id="myChart"></canvas>
+      </div>
+      <div class="col-md-6">
+        <canvas id="myChart2"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <script src="{% static 'js/expensemetric.js'%}"></script>
+  <script src="{% static 'js/expensestats3.js' %}"></script>
+  <script src="{% static 'js/expensestats4.js' %}"></script>
+
+{% endblock content %}
