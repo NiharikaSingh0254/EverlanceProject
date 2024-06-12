@@ -28,11 +28,27 @@
         .total-row td {
             font-weight: bold;
         }
+        .date-range {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 18px;
+        }
     </style>
 </head>
 <body>
     <h1>EVERLANCE</h1>
     <h2>Incomes</h2>
+    <div class="date-range">
+        {% if start_date and end_date %}
+            <p>From: {{ start_date }} To: {{ end_date }}</p>
+        {% elif start_date %}
+            <p>From: {{ start_date }}</p>
+        {% elif end_date %}
+            <p>Up to: {{ end_date }}</p>
+        {% else %}
+            <p>All Incomes</p>
+        {% endif %}
+    </div>
     <table>
         <thead>
             <tr>

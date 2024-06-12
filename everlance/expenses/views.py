@@ -49,7 +49,8 @@ def index(request):
     context = {
         'expenses': expenses,
         'page_obj': page_obj,
-        'currency': currency
+        'currency': currency,
+        'categories':categories
     }
     return render(request, 'expenses/index.html', context)
 # @login_required(login_url='/authentication/login')
@@ -275,43 +276,30 @@ def expense_weekwise_summary(request):
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
     
-# def last_3months_stats(request):
-#     try:
-#         todays_date = datetime.date.today()
-#         three_months_ago = todays_date - datetime.timedelta(days=30 * 3)
-#         expenses = Expense.objects.filter(owner=request.user, date__gte=three_months_ago, date__lte=todays_date)
+def get_monday_of_current_week(date):
+    # Find the Monday of the current week
+    monday = date - timedelta(days=date.weekday())
+    return monday
 
-#         monthly_data = defaultdict(lambda: defaultdict(float))
-
-#         for expense in expenses:
-#             month = expense.date.strftime('%Y-%m')
-#             monthly_data[month][expense.category] += expense.amount
-
-#         data = {
-#             'months': list(monthly_data.keys()),
-#             'expenses': [
-#                 {'month': month, 'categories': dict(category_data)}
-#                 for month, category_data in monthly_data.items()
-#             ]
-#         }
-
-#         return JsonResponse(data, safe=False)
-#     except Exception as e:
-#         return JsonResponse({'error': str(e)}, status=500)
-    
+def get_sunday_of_current_week(date):
+    # Find the Sunday of the current week
+    sunday = date + timedelta(days=(6 - date.weekday()))
+    return sunday
 
 def metric_card_view1(request):
     try:
         today = datetime.today().date()
         start_of_year = datetime(today.year, 1, 1).date()
 
-        one_week_ago = today - timedelta(weeks=1)
+        monday_of_current_week = get_monday_of_current_week(today)
+        sunday_of_current_week = get_sunday_of_current_week(today)
+
 
         # Filter expenses by date
         expenses = Expense.objects.filter(owner=request.user)
 
         daily_expenses = expenses.filter(date=today).count()
-        weekly_expenses = expenses.filter(date__gte=one_week_ago, date__lt=today).count()
+        weekly_expenses = expenses.filter(date__gte=monday_of_current_week, date__lte=sunday_of_current_week).count()
         yearly_expenses = expenses.filter(date__gte=start_of_year, date__lte=today).count()
 
         monthly_expenses = {}
@@ -342,18 +330,21 @@ def metric_card_view1(request):
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
 
+
 def metric_card_view2(request):
     try:
         today = datetime.today().date()
         start_of_year = datetime(today.year, 1, 1).date()
 
-        one_week_ago = today - timedelta(weeks=1)
+        monday_of_current_week = get_monday_of_current_week(today)
+        sunday_of_current_week = get_sunday_of_current_week(today)
+
 
         # Filter expenses by date
         expenses = Expense.objects.filter(owner=request.user)
 
         daily_expenses = expenses.filter(date=today)
-        weekly_expenses = expenses.filter(date__gte=one_week_ago, date__lt=today)
+        weekly_expenses = expenses.filter(date__gte=monday_of_current_week, date__lte=sunday_of_current_week)
         yearly_expenses = expenses.filter(date__gte=start_of_year, date__lte=today)
 
         total_daily_expenses = sum(expense.amount for expense in daily_expenses)
@@ -391,73 +382,85 @@ def metric_card_view2(request):
         return JsonResponse({'error': str(e)}, status=500)
     
 
-
-def export_csv(request):
-    
-
-    response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition']='attachment; filename=Expenses'+ \
-    str(datetime.now())+'.csv'
-
-    writer = csv.writer(response)
-    writer.writerow(['Amount','Description','Category','Date'])
+def get_filtered_expenses(request):
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+    category = request.GET.get('category')
 
     expenses = Expense.objects.filter(owner=request.user)
+    
+    if start_date:
+        expenses =expenses.filter(date__gte=start_date)
+    if end_date:
+        expenses =expenses.filter(date__lte=end_date)
+    if category:
+        expenses =expenses.filter(category=category)
+
+    total = expenses.aggregate(Sum('amount'))['amount__sum'] or 0
+
+    context = {
+        'expenses': expenses,
+        'start_date': start_date,
+        'end_date': end_date,
+        'category':category,
+        'total':total
+    }
+    
+
+    return context
+
+def export_csv(request):
+    expenses = get_filtered_expenses(request)
+
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename=Expenses' + \
+        str(datetime.now()) + '.csv'
+
+    writer = csv.writer(response)
+    writer.writerow(['Amount', 'Description', 'Category', 'Date'])
 
     for expense in expenses:
-        writer.writerow([expense.amount,expense.description,expense.category,expense.date])
+        writer.writerow([expense.amount, expense.description, expense.category, expense.date])
 
-    
     return response
 
-
 def export_excel(request):
-    
+    expenses = get_filtered_expenses(request)
+
     response = HttpResponse(content_type='application/ms-excel')
-    response['Content-Disposition']='attachment; filename=Expenses'+ \
-    str(datetime.now())+'.xls'
+    response['Content-Disposition'] = 'attachment; filename=Expenses' + \
+        str(datetime.now()) + '.xls'
     wb = xlwt.Workbook(encoding='utf-8')
     ws = wb.add_sheet('Expenses')
     row_num = 0
     font_style = xlwt.XFStyle()
     font_style.font.bold = True
 
-    columns = ['Amount','Description','Category','Date']
+    columns = ['Amount', 'Description', 'Category', 'Date']
 
     for col_num in range(len(columns)):
-        ws.write(row_num,col_num,columns[col_num],font_style)
+        ws.write(row_num, col_num, columns[col_num], font_style)
 
     font_style = xlwt.XFStyle()
 
-    rows = Expense.objects.filter(owner=request.user).values_list('amount','description','category','date')
-
-    for row in rows :
+    for expense in expenses:
         row_num += 1
-
-        for col_num in range(len(row)):
-            ws.write(row_num,col_num,str(row[col_num]),font_style)
+        ws.write(row_num, 0, str(expense.amount), font_style)
+        ws.write(row_num, 1, expense.description, font_style)
+        ws.write(row_num, 2, expense.category, font_style)
+        ws.write(row_num, 3, str(expense.date), font_style)
 
     wb.save(response)
-
     return response
 
-
 def export_pdf(request):
-    # Get expenses for the current user
-    expenses = Expense.objects.filter(owner=request.user)
+    context = get_filtered_expenses(request)
+    html_string = render_to_string('expenses/pdf-output.html', context)
 
-    # Calculate the total sum of the expenses
-    total_sum = expenses.aggregate(total=Sum('amount'))['total'] or 0
-
-    # Render the HTML template to a string
-    html_string = render_to_string('expenses/pdf-output.html', {'expenses': expenses, 'total': total_sum})
-
-    # Generate PDF from the HTML string
     pdf = pdfkit.from_string(html_string, False)
 
-    # Create the HTTP response with the appropriate PDF headers
     response = HttpResponse(pdf, content_type='application/pdf')
     response['Content-Disposition'] = f'inline; filename=Expenses_{datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.pdf'
     response['Content-Transfer-Encoding'] = 'binary'
-    
+
     return response

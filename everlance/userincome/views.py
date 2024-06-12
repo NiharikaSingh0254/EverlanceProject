@@ -63,7 +63,8 @@ def index(request):
     context = {
         'income': income,
         'page_obj': page_obj,
-        'currency': currency
+        'currency': currency,
+        'sources':categories
     }
     return render(request, 'income/index.html', context)
 
@@ -151,7 +152,7 @@ def income_sources_data(request):
     finalrep = {}
 
     def get_source(income):
-        return income.source  # Assuming income has a category field
+        return income.source  # Assuming income has a source field
 
     # Ensure unique categories (optional)
     source_list = list(set(map(get_source, incomes)))
@@ -164,7 +165,7 @@ def income_sources_data(request):
         return amount
 
     for source in source_list:
-        # Update finalrep with 0 if category is empty
+        # Update finalrep with 0 if source is empty
         finalrep.setdefault(source, 0)  # defaultdict-like behavior
         finalrep[source] = get_source_income_amount(source)
 
@@ -211,19 +212,29 @@ def income_summary_rest(request):
 def incomestats_view(request):
     return render(request, 'income/incomestats.html')
 
+def get_monday_of_current_week(date):
+    # Find the Monday of the current week
+    monday = date - timedelta(days=date.weekday())
+    return monday
+
+def get_sunday_of_current_week(date):
+    # Find the Sunday of the current week
+    sunday = date + timedelta(days=(6 - date.weekday()))
+    return sunday
 
 def metric_card_view_income(request):
     try:
         today = datetime.today().date()
         start_of_year = datetime(today.year, 1, 1).date()
 
-        one_week_ago = today - timedelta(weeks=1)
+        monday_of_current_week = get_monday_of_current_week(today)
+        sunday_of_current_week = get_sunday_of_current_week(today)
 
         # Filter incomes by date
         incomes = UserIncome.objects.filter(owner=request.user)
 
         daily_incomes = incomes.filter(date=today).count()
-        weekly_incomes = incomes.filter(date__gte=one_week_ago, date__lt=today).count()
+        weekly_incomes = incomes.filter(date__gte=monday_of_current_week, date__lte=sunday_of_current_week).count()
         yearly_incomes = incomes.filter(date__gte=start_of_year, date__lte=today).count()
 
         monthly_incomes = {}
@@ -261,13 +272,13 @@ def metric_card_view2_income(request):
         today = datetime.today().date()
         start_of_year = datetime(today.year, 1, 1).date()
 
-        one_week_ago = today - timedelta(weeks=1)
-
+        monday_of_current_week = get_monday_of_current_week(today)
+        sunday_of_current_week = get_sunday_of_current_week(today)
         # Filter incomes by date
         incomes = UserIncome.objects.filter(owner=request.user)
 
         daily_incomes = incomes.filter(date=today)
-        weekly_incomes = incomes.filter(date__gte=one_week_ago, date__lt=today)
+        weekly_incomes = incomes.filter(date__gte=monday_of_current_week, date__lte=sunday_of_current_week)
         yearly_incomes = incomes.filter(date__gte=start_of_year, date__lte=today)
 
         total_daily_incomes = sum(income.amount for income in daily_incomes)
@@ -356,73 +367,85 @@ def income_weekwise_summary(request):
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
     
-
-def incomeexport_csv(request):
-
-    response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition']='attachment; filename=Incomes'+ \
-    str(datetime.now())+'.csv'
-
-    writer = csv.writer(response)
-    writer.writerow(['Amount','Description','Source','Date'])
+def get_filtered_incomes(request):
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+    source = request.GET.get('source')
 
     incomes = UserIncome.objects.filter(owner=request.user)
+    
+    if start_date:
+        incomes =incomes.filter(date__gte=start_date)
+    if end_date:
+        incomes =incomes.filter(date__lte=end_date)
+    if source:
+        incomes =incomes.filter(source=source)
+
+    total = incomes.aggregate(Sum('amount'))['amount__sum'] or 0
+
+    context = {
+        'incomes': incomes,
+        'start_date': start_date,
+        'end_date': end_date,
+        'source':source,
+        'total':total
+    }
+    
+
+    return context
+
+def incomeexport_csv(request):
+    incomes = get_filtered_incomes(request)
+
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename=Incomes' + \
+        str(datetime.now()) + '.csv'
+
+    writer = csv.writer(response)
+    writer.writerow(['Amount', 'Description', 'Source', 'Date'])
 
     for income in incomes:
-        writer.writerow([income.amount,income.description,income.source,income.date])
+        writer.writerow([income.amount, income.description, income.source, income.date])
 
-    
     return response
 
 def incomeexport_excel(request):
-    
+    incomes = get_filtered_incomes(request)
+
     response = HttpResponse(content_type='application/ms-excel')
-    response['Content-Disposition']='attachment; filename=Incomes'+ \
-    str(datetime.now())+'.xls'
+    response['Content-Disposition'] = 'attachment; filename=Incomes' + \
+        str(datetime.now()) + '.xls'
     wb = xlwt.Workbook(encoding='utf-8')
     ws = wb.add_sheet('Incomes')
     row_num = 0
     font_style = xlwt.XFStyle()
     font_style.font.bold = True
 
-    columns = ['Amount','Description','Source','Date']
+    columns = ['Amount', 'Description', 'Source', 'Date']
 
     for col_num in range(len(columns)):
-        ws.write(row_num,col_num,columns[col_num],font_style)
+        ws.write(row_num, col_num, columns[col_num], font_style)
 
     font_style = xlwt.XFStyle()
 
-    rows = UserIncome.objects.filter(owner=request.user).values_list('amount','description','source','date')
-
-    for row in rows :
+    for income in incomes:
         row_num += 1
-
-        for col_num in range(len(row)):
-            ws.write(row_num,col_num,str(row[col_num]),font_style)
+        ws.write(row_num, 0, str(income.amount), font_style)
+        ws.write(row_num, 1, income.description, font_style)
+        ws.write(row_num, 2, income.source, font_style)
+        ws.write(row_num, 3, str(income.date), font_style)
 
     wb.save(response)
-
     return response
 
-
 def incomeexport_pdf(request):
-    
-    # Get expenses for the current user
-    incomes = UserIncome.objects.filter(owner=request.user)
+    context = get_filtered_incomes(request)
+    html_string = render_to_string('income/incomepdf-output.html', context)
 
-    # Calculate the total sum of the expenses
-    total_sum = incomes.aggregate(total=Sum('amount'))['total'] or 0
-
-    # Render the HTML template to a string
-    html_string = render_to_string('income/incomepdf-output.html', {'incomes': incomes, 'total': total_sum})
-
-    # Generate PDF from the HTML string
     pdf = pdfkit.from_string(html_string, False)
 
-    # Create the HTTP response with the appropriate PDF headers
     response = HttpResponse(pdf, content_type='application/pdf')
     response['Content-Disposition'] = f'inline; filename=Incomes_{datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.pdf'
     response['Content-Transfer-Encoding'] = 'binary'
-    
+
     return response
-    

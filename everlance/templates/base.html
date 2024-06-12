@@ -15,12 +15,12 @@
     <!-- Custom styles for this template -->
     <link href="{% static 'css/dashboard.css' %}" rel="stylesheet" />
 </head>
-<body>
-    <nav class="navbar navbar-dark fixed-top bg-dark flex-md-nowrap p-0 shadow">
-        <a class="navbar-brand col-sm-3 col-md-2 mr-0" href="#">Everlance</a>
+<body class="main-body-color">
+    <nav class="navbar navbar-dark fixed-top flex-md-nowrap p-0">
+        <nav class="navbar-brand col-sm-3 col-md-2 mr-0" href="#">Everlance</nav>
         <ul class="navbar-nav px-3" style="display: flex; flex-direction: row; align-items: center;">
             <li class="nav-item text-nowrap">
-                <span class="nav-link" href="">Username: {{request.user.username}}</span>
+                <span class="nav-link" href="">Hello, {{request.user.username}}</span>
                 
             </li>
             <li class="nav-item text-nowrap mt-3 ml-2">
@@ -37,7 +37,7 @@
         <div class="row flex-grow-1">
             {% include 'partials/_sidebar.html' %}
 
-            <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-4">
+            <main role="main" class="col-md-10 ml-sm-auto px-4">
                 {% block content %}
                 
                 {% endblock %}

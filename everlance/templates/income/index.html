@@ -1,139 +1,164 @@
 {% extends 'base.html' %}
 {% load static %}
 
-
-
 {% block content %}
-  <div class="container mt-4">
-    <div class="row">
-      <div class="col-md-10">
-        <nav aria-label="breadcrumb">
-          <ol class="breadcrumb">
-            <li class="breadcrumb-item">
-              <a href="">Incomes</a>
-            </li>
-            <li class="breadcrumb-item active" aria-current="page">
-              My Incomes
-            </li>
-          </ol>
-        </nav>
-      </div>
+<div class="container mt-5">
+  <div class="row">
+    <div class="col-md-10">
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item">
+            <a href="">Incomes</a>
+          </li>
+          <li class="breadcrumb-item active" aria-current="page">
+            My Incomes
+          </li>
+        </ol>
+      </nav>
+    </div>
 
-      <div class="col-md-2">
-        <a href="{% url 'add-income'%}" class="btn btn-primary">Add Income</a>
+    <div class="col-md-2">
+      <a href="{% url 'add-income'%}" class="btn btn-primary add-expense">Add Income</a>
+    </div>
+  </div>
+</div>
+{% include 'partials/_messages.html' %}
+{% if income.count %}
+<div class="container mt-3">
+  <div class="row">
+    <div class="col-md-6">
+      <div class="col-ms-2">
+        <h5 class="title1"><strong>Top 5 Income Sources</strong></h5>
+      </div>
+      <div class="col-ms-10 stats-1 color">
+        <canvas id="myChart"></canvas>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="col-ms-2">
+        <h5 class="title1"><strong>Cummulative Source Comparison</strong></h5>
+      </div>
+      <div class="col-ms-10 stats-1 color">
+        <canvas id="incomeChart"></canvas>
       </div>
     </div>
   </div>
+</div>
 
-  <div class="container">
-    {% include 'partials/_messages.html' %} {% if income.count %}
-
+<div class="container mt-5">
+  <h5 class="title1"><strong>Export Your Incomes</strong></h5>
+  <form id="filterForm" method="GET" action="">
     <div class="row">
-      <div class="col-md-8">
-        <div class="container">
-          <div class="row">
-            <div class="col-md-4">
-              <a href="{% url 'incomeexport-csv' %}" class="btn btn-secondary">Export to CSV</a>
-            </div>
-            <div class="col-md-4">
-              <a href="{% url 'incomeexport-excel' %}" class="btn btn-info">Export to EXCEL</a>
-            </div>
-            <div class="col-md-4">
-              <a href="{% url 'incomeexport-pdf' %}" class="btn btn-success">Export to PDF</a>
-            </div>
-          </div>  
-        </div>   
+      <div class="col-md-4">
+        <div class="form-group">
+          <label for="startDate">Start Date</label>
+          <input type="date" class="form-control" id="startDate" name="start_date" value="{{ request.GET.start_date }}">
+        </div>
       </div>
       <div class="col-md-4">
         <div class="form-group">
-          <input type="text" class="form-control" id="searchField" placeholder="Search">
+          <label for="endDate">End Date</label>
+          <input type="date" class="form-control" id="endDate" name="end_date" value="{{ request.GET.end_date }}">
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="form-group">
+          <label for="category">Source</label>
+          <select class="form-control" id="category" name="source">
+            <option value="">All Sources</option>
+            {% for source in sources %}
+              <option value="{{ source.name }}" {% if request.GET.category == source.name|stringformat:"s" %}selected{% endif %}>{{ source.name }}</option>
+            {% endfor %}
+          </select>
         </div>
       </div>
     </div>
-    <div class="app-table">
-      <table class="table table-stripped table-hover">
-        <thead>
-          <tr>
-            <th>Amount ({{currency}})</th>
-            <th>Source</th>
-            <th>Description</th>
-            <th>Date</th>
-            <th></th>
-          </tr>
-        </thead>
-
-        <tbody>
-          {% for income in page_obj%}
-          <tr>
-            <td>{{income.amount}}</td>
-            <td>{{income.source}}</td>
-            <td>{{income.description}}</td>
-            <td>{{income.date}}</td>
-            <td><a href="{% url 'income-edit' income.id  %}" class="btn btn-secondary btn-sm" >Edit</a></td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-
-    <p class="no-results" style="display: none;">No results </p>
-
-
-    <div class="table-output">
-      <table class="table table-stripped table-hover">
-        <thead>
-          <tr>
-            <th>Amount ({{currency}})</th>
-            <th>Source</th>
-            <th>Description</th>
-            <th>Date</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody  class="table-body">
-        </tbody>
-      </table>
-    </div>
-
-    <div class="pagination-container">
-      Showing page {{page_obj.number}} of {{ page_obj.paginator.num_pages }}
-      <ul class="pagination align-right float-right mr-auto">
-        {% if page_obj.has_previous %}
-        <li {% if page_obj.number == 1 %} class="page-item active" {% endif %}><a class="page-link" href="?page=1">&laquo; 1</a></li>
-        <li class="page-item"> <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a></li>
-        {% endif %}
-
-        {% if page_obj.has_next %}
-        <li class="page-item"> <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a></li>
-        <li class="page-item"> <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">{{ page_obj.paginator.num_pages}} &raquo;</a></li>
-        {% endif %}
-      </ul>
-    </div>
-    <div class="container mt-5">
-      <div class="row style4">
-        <div class="col-md-6 stats-1">
-          <div class="card color">
-            <h5 align="center"><strong>Top 5 income Categories</strong></h5>
-            <canvas id="myChart"></canvas>
-          </div>
-        </div>
-        <div class="col-md-6 stats-2">
-          <div class="card color">
-            <h5 align="center"><strong>Cummulative Category Comparison</strong></h5>
-            <canvas id="incomeChart"></canvas>
-          </div>
-        </div>
+    <div class="row mt-3" align="center">
+      <div class="col-md-4">
+        <button class="btn btn-secondary add-expense1" type="submit" formaction="{% url 'incomeexport-csv' %}">Export to CSV</button>
+      </div>
+      <div class="col-md-4">
+        <button class="btn btn-info add-expense1" type="submit" formaction="{% url 'incomeexport-excel' %}">Export to EXCEL</button>
+      </div>
+      <div class="col-md-4">
+        <button class="btn btn-success add-expense1" type="submit" formaction="{% url 'incomeexport-pdf' %}">Export to PDF</button>
       </div>
     </div>
-    {% endif %}
+  </form>
+</div>
+
+<div class="container mt-5">
+  <div class="row">
+    <div class="col-md-8">
+      <h5 class="title1"><strong>Recent Incomes</strong></h5>
+    </div>
+    <div class="col-md-4">
+      <div class="form-group">
+        <input type="text" class="form-control" id="searchField" placeholder="Search Incomes">
+      </div>
+    </div>
   </div>
   
-  <script src="{% static 'js/searchIncome.js' %}"></script>
-  <script src="{% static 'js/incomestats1.js' %}"></script>
-  <script src="{% static 'js/incomestats2.js' %}"></script>
+  <div class="app-table color">
+    <table class="table table-stripped table-hover">
+      <thead>
+        <tr>
+          <th>Amount ({{ currency }})</th>
+          <th>Source</th>
+          <th>Description</th>
+          <th>Date</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for expense in page_obj %}
+        <tr>
+          <td>{{ expense.amount }}</td>
+          <td>{{ expense.source }}</td>
+          <td>{{ expense.description }}</td>
+          <td>{{ expense.date }}</td>
+          <td><a href="{% url 'income-edit' expense.id %}" class="btn btn-secondary btn-sm">Edit</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 
+  <p class="no-results color" style="display: none;">No results</p>
 
+  <div class="table-output color">
+    <table class="table table-stripped table-hover">
+      <thead>
+        <tr>
+          <th>Amount ({{ currency }})</th>
+          <th>Source</th>
+          <th>Description</th>
+          <th>Date</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody class="table-body">
+      </tbody>
+    </table>
+  </div>
+  <div class="pagination-container">
+    Showing page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+    <ul class="pagination align-right float-right mr-auto">
+      {% if page_obj.has_previous %}
+      <li {% if page_obj.number == 1 %} class="page-item active" {% endif %}><a class="page-link" href="?page=1">&laquo; 1</a></li>
+      <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a></li>
+      {% endif %}
+      {% if page_obj.has_next %}
+      <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a></li>
+      <li class="page-item"><a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">{{ page_obj.paginator.num_pages }} &raquo;</a></li>
+      {% endif %}
+    </ul>
+  </div>
+ 
+</div>
+{% endif %}
 
-
-
+<script src="{% static 'js/searchIncome.js' %}"></script>
+<script src="{% static 'js/incomestats1.js' %}"></script>
+<script src="{% static 'js/incomestats2.js' %}"></script>
 {% endblock content %}
